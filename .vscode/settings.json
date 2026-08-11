@@ -2,5 +2,12 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
   "python.terminal.activateEnvironment": true,
   "editor.formatOnSave": true,
-  "python.linting.enabled": true
+  "editor.inlineSuggest.enabled": true,
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "off",
+    "strings": "off"
+  },
+  "editor.suggestSelection": "recentlyUsed"
 }
