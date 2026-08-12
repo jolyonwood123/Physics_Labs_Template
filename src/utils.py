@@ -2,22 +2,33 @@ import json
 import os
 import time
 from dataclasses import dataclass
+from datetime import datetime as dt
 from enum import Enum
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from dotenv import load_dotenv
 
-load_dotenv()
-raw_configs = os.getenv("DATA_CONFIGS", "{}")
-data_configs = json.loads(raw_configs)
-plot_dir = str(os.getenv("PLOTSDIR"))
-print(plot_dir)
+import configs as conf
+
+MAIN_DIR = Path(__file__).resolve().parent
+RAW_CONFIGS = os.getenv("DATA_CONFIGS", "{}")
+DATA_CONFIGS = json.loads(RAW_CONFIGS)
+PLOT_DIR = MAIN_DIR / "plots"
+TESTS_DIR = MAIN_DIR / "tests"
+RAW_DATA_DIR = MAIN_DIR / "data_raw"
+CLEAN_DATA_DIR = MAIN_DIR / "data_raw"
+PROCESSED_DATA_DIR = MAIN_DIR / "data_raw"
+
+
 filenames = []
 
 
-def get_data(data_configs: dict = data_configs):
+def get_date() -> str:
+    return dt.today().strftime(conf.DISPLAY_DATE_FORMAT)
+
+
+def get_data(data_configs: dict = DATA_CONFIGS) -> dict:
     DATA_DIR = Path(__file__).resolve().parent / "data"
     data_store = {}
 
@@ -96,8 +107,9 @@ class CalcData:
     pass
 
 
-class BaseLab:
-    def __init__(self, filename: str, plot_dir=plot_dir):
+class LabDataSet:
+    def __init__(self, filename: str, plot_dir=PLOT_DIR):
+        data_store = get_data()
         self._df = data_store[filename]
         self.name = filename
         self.projectdir = os.path.dirname(os.path.abspath(__file__))
@@ -121,9 +133,7 @@ class BaseLab:
         # Delegate the bracket lookup to the internal dataframe
         return self._df[key]
 
-    def converter(
-        self, column: str, target_units_in_units: int = 1, data_units: int = 1
-    ):
+    def converter(self, column: str, target_units_in_units: int = 1, data_units: int = 1):
         df = self._df  # noqa: F841
         data = self._df[column]
         conversion_factor = data_units / target_units_in_units
@@ -137,9 +147,7 @@ class BaseLab:
 
         plt.figure(figsize=figsize)
         plt.plot(df[xaxis], df[yaxis], label="", color="red")
-        plt.title(
-            f"{yaxis.upper().replace('_', ' ')} vs {xaxis.upper().replace('_', ' ')}"
-        )
+        plt.title(f"{yaxis.upper().replace('_', ' ')} vs {xaxis.upper().replace('_', ' ')}")
         plt.xlabel(xaxis.replace("_", " "))
         plt.ylabel(yaxis.replace("_", " "))
         plt.grid(True)
@@ -169,9 +177,5 @@ class BaseLab:
         print(f"Graph saved to: {self.projectdir}{self.plot_dir}as {plot_name}.png")
 
 
-data_store = get_data()
-test = BaseLab("kinematics")
-
-# print(test.converter('velocity_mps', 1000))
-print(test.timeit(test.create_2dgraph, "distance_m", "velocity_mps"))
-test.save_plot()
+if __name__ == "__main__":
+    pass

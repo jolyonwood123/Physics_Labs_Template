@@ -1,0 +1,6 @@
+
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "TCH"]  # example rule sets
+ignore = ["F401", "DTZ002"]
