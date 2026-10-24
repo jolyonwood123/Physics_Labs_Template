@@ -1,7 +1,7 @@
-import json
 import os
 import time
 from dataclasses import dataclass
+from datetime import UTC
 from datetime import datetime as dt
 from enum import Enum
 from pathlib import Path
@@ -11,55 +11,62 @@ import pandas as pd
 
 import configs as conf
 
-MAIN_DIR = Path(__file__).resolve().parent
+MAIN_DIR = Path(__file__).resolve().parent.parent
+print(MAIN_DIR)
 RAW_CONFIGS = os.getenv("DATA_CONFIGS", "{}")
-DATA_CONFIGS = json.loads(RAW_CONFIGS)
-PLOT_DIR = MAIN_DIR / "plots"
-TESTS_DIR = MAIN_DIR / "tests"
-RAW_DATA_DIR = MAIN_DIR / "data_raw"
-CLEAN_DATA_DIR = MAIN_DIR / "data_raw"
-PROCESSED_DATA_DIR = MAIN_DIR / "data_raw"
 
-
-filenames = []
+PLOT_DIR = MAIN_DIR / "Plots"
+TESTS_DIR = MAIN_DIR / "Tests"
+MY_RAW_DATA_DIR = MAIN_DIR / "DataRaw" / "Recorded"
+REFERENCE_RAW_DATA_DIR = MAIN_DIR / "DataRaw" / "Reference"
+CLEAN_DATA_DIR = MAIN_DIR / "DataCleaned"
+PROCESSED_DATA_DIR = MAIN_DIR / "DataProcessed"
 
 
 def get_date() -> str:
-    return dt.today().strftime(conf.DISPLAY_DATE_FORMAT)
+    return dt.now(tz=UTC).strftime(conf.DISPLAY_DATE_FORMAT)
 
 
-def get_data(data_configs: dict = DATA_CONFIGS) -> dict:
-    DATA_DIR = Path(__file__).resolve().parent / "data"
+def get_data(data_configs: list | None = None) -> dict:
+    filenames = [item.name for item in (MY_RAW_DATA_DIR).iterdir() if item.is_file()]
+    DATA_DIR = MY_RAW_DATA_DIR
     data_store = {}
 
-    for filename, row_remove in data_configs.items():
-        path = DATA_DIR / f"{filename}.csv"
+    for filename in filenames:
+        path = DATA_DIR / filename
+        print(path)
         if path.exists():
-            data_store[filename] = pd.read_csv(path, skiprows=row_remove)
-            filenames.append(filename)
+            data_store[filename] = pd.read_csv(path)
+
+            print(filename + ": Found and loaded")
+
     return data_store
 
 
 class Magnitude(Enum):
     # Defined Magnitude of common used prefixs
-    Atto: tuple = (10**-18, "")
-    Femto: tuple = (10**-15, "")
-    Pico: tuple = (10**-12, "")
-    Nano: tuple = (10**-9, "")
-    Micro: tuple = (10**-6, "")
-    Milli: tuple = (10**-3, "")
-    Centi: tuple = (10**-2, "")
-    Deci: tuple = (10**-1, "")
-    Hecta: tuple = (10**1, "")
-    Deca: tuple = (10**2, "")
-    Kilo: tuple = (10**3, "")
-    Mega: tuple = (10**6, "")
-    Giga: tuple = (10**9, "")
-    Tera: tuple = (10**12, "")
+    Atto = (10**-18, "a")
+    Femto = (10**-15, "f")
+    Pico = (10**-12, "p")
+    Nano = (10**-9, "n")
+    Micro = (10**-6, "u")
+    Milli = (10**-3, "m")
+    Centi = (10**-2, "c")
+    Deci = (10**-1, "d")
+    Hecto = (10**1, "h")
+    Deca = (10**2, "da")
+    Kilo = (10**3, "k")
+    Mega = (10**6, "M")
+    Giga = (10**9, "G")
+    Tera = (10**12, "T")
+    Peta = (10**15, "P")
+    Exa = (10**18, "E")
 
+    @property
     def get_mag(self):
         return self.value[0]
 
+    @property
     def get_prefix(self):
         return self.value[1]
 
@@ -108,12 +115,12 @@ class CalcData:
 
 
 class LabDataSet:
-    def __init__(self, filename: str, plot_dir=PLOT_DIR):
+    def __init__(self, filename: str):
         data_store = get_data()
         self._df = data_store[filename]
         self.name = filename
         self.projectdir = os.path.dirname(os.path.abspath(__file__))
-        self.plot_dir = self.projectdir + plot_dir
+        self.plot_dir = PLOT_DIR
 
         print(self.projectdir)
         if not os.path.exists(self.plot_dir):
@@ -133,7 +140,9 @@ class LabDataSet:
         # Delegate the bracket lookup to the internal dataframe
         return self._df[key]
 
-    def converter(self, column: str, target_units_in_units: int = 1, data_units: int = 1):
+    def converter(
+        self, column: str, target_units_in_units: int = 1, data_units: int = 1
+    ):
         df = self._df  # noqa: F841
         data = self._df[column]
         conversion_factor = data_units / target_units_in_units
@@ -147,7 +156,9 @@ class LabDataSet:
 
         plt.figure(figsize=figsize)
         plt.plot(df[xaxis], df[yaxis], label="", color="red")
-        plt.title(f"{yaxis.upper().replace('_', ' ')} vs {xaxis.upper().replace('_', ' ')}")
+        plt.title(
+            f"{yaxis.upper().replace('_', ' ')} vs {xaxis.upper().replace('_', ' ')}"
+        )
         plt.xlabel(xaxis.replace("_", " "))
         plt.ylabel(yaxis.replace("_", " "))
         plt.grid(True)
@@ -157,6 +168,12 @@ class LabDataSet:
     def display_2dgraph(self):
         plt.tight_layout()
         plt.show()
+
+    # Create, Display, then Save Graph for x and y
+    def CDS_graph(self, xaxis: str, yaxis: str, figsize: tuple = (10, 10)):
+        self.create_2dgraph(xaxis, yaxis, figsize)
+        self.display_2dgraph()
+        self.save_plot()
 
     def save_plot(self, plot_name: str = "untitled"):
 

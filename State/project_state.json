@@ -1,12 +1,11 @@
 {
   "INIT": true,
   "FOLDER_NAME": "Labs Template",
-  "FIRST_UPDATED": "12-08-2026 23:15",
-  "LAST_UPDATED": "12-08-2026 23:15",
+  "FIRST_UPDATED": "23-10-2026 17:08",
+  "LAST_UPDATED": "23-10-2026 17:08",
   "OVERVIEW": "Hello world this a test please bare with me \nwhile I fix the mess of code I have made\n",
-  "DATASET_LIST": "|circuits.csv|263|2026-06-04 23:34:30.109260+00:00|Recorded|\n|kinematics.csv|292|2026-06-04 23:34:29.443261+00:00|Recorded|\n",
+  "DATASET_LIST": "|circuits.csv|177|2026-10-23 16:17:07.500448+00:00|Recorded|\n|FreeFallData.csv|564|2026-10-23 16:29:45.970754+00:00|Recorded|\n|kinematics.csv|181|2026-10-23 16:17:03.506068+00:00|Recorded|\n",
   "LOG_ENTRIES": [
-    "|12-08-2026 23:15|1.0.0| Started project and initialised workspace|",
-    "|12-08-2026 23:15|1.0.0|WASSSSUUPPPPP|"
+    "|23-10-2026 17:08|1.0.0| Started project and initialised workspace|"
   ]
 }

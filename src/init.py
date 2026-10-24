@@ -1,6 +1,6 @@
 import json
+from datetime import UTC
 from datetime import datetime as dt
-from datetime import timezone
 from pathlib import Path
 
 import configs as conf
@@ -46,7 +46,7 @@ class State:
         return {
             "name": file.name,
             "size_bytes": info.st_size,
-            "modified": dt.fromtimestamp(info.st_mtime, tz=timezone.utc),
+            "modified": dt.fromtimestamp(info.st_mtime, tz=UTC),
             "is_file": file.is_file(),
             "extension": file.suffix,
         }
@@ -63,7 +63,7 @@ class State:
             data_sets_str += (
                 f"|{info['name']}|{info['size_bytes']}|{info['modified']}|Reference|\n"
             )
-        print(data_sets_str)
+
         return data_sets_str
 
     def initialise(self) -> None:
@@ -81,8 +81,8 @@ class State:
             project_info = {
                 "INIT": True,
                 "FOLDER_NAME": conf.PROJECT_NAME,
-                "FIRST_UPDATED": dt.today().strftime(conf.DISPLAY_DATE_FORMAT),
-                "LAST_UPDATED": dt.today().strftime(conf.DISPLAY_DATE_FORMAT),
+                "FIRST_UPDATED": dt.now(tz=UTC).strftime(conf.DISPLAY_DATE_FORMAT),
+                "LAST_UPDATED": dt.now(tz=UTC).strftime(conf.DISPLAY_DATE_FORMAT),
                 "OVERVIEW": self.get_brief(),
                 "DATASET_LIST": data_sets_str,
                 "LOG_ENTRIES": [
@@ -97,7 +97,7 @@ class State:
         log_str = ""
         for line in current_state["LOG_ENTRIES"]:
             log_str += line + "\n"
-            print(log_str)
+
         return log_str
 
     def log_state(self, log: str) -> None:
@@ -112,13 +112,17 @@ class State:
         current_state["LOG_ENTRIES"].append(new_log)
 
         self.update_project_state(current_state)
+        self.output_md()
+        print(new_log)
 
     def output_md(self) -> None:
         with open(self.state_path / "log_template.md", encoding="utf-8") as file:
             template: str = file.read()
         current_state = self.read_project_state()
         log_str = self.create_log_str(current_state["LOG_ENTRIES"])
+        data_str = self.get_dataset_list()
         current_state["LOG_ENTRIES"] = log_str
+
         lab_md = template.format_map(current_state)
         with open(
             self.state_path / f"{conf.PROJECT_NAME}.md", "w", encoding="utf-8"
@@ -136,7 +140,7 @@ def init_state() -> int:
     try:
         state = State()
         state.initialise()
-        print(state.read_project_state())
+
         state.output_md()
     except Exception as e:  # noqa: BLE001
         print(f"STATE INITIALISING FAILED: {e}")
@@ -154,5 +158,11 @@ def reload_state():
     state.read_project_state()
 
 
-init_state()
-log_state("WASSSSUUPPPPP")
+def uninit_state():
+    state = State()
+    state.uninitialise()
+
+
+if __name__ == "__main__":
+    init_state()
+    log_state("Project Initialised")
